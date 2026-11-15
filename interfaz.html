@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRA | Medical Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;font-family:'Roboto',sans-serif}
+    body{margin:0;padding:18px;background:#0b1120;color:#e5edf5}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 auto 16px;max-width:1500px}
+    .brand{font-size:22px;font-weight:700;letter-spacing:.4px}.brand span{color:#38bdf8}
+    .sub{font-size:12px;color:#94a3b8;margin-top:4px}
+    .status-pill{border:1px solid #34516a;background:#102238;color:#93c5fd;padding:8px 12px;border-radius:30px;font-size:12px}
+    .layout{max-width:1500px;margin:auto;display:grid;grid-template-columns:minmax(250px,.78fr) minmax(420px,1.4fr) minmax(300px,1fr);gap:12px;align-items:stretch}
+    .panel{background:#172235;border:1px solid #293950;border-radius:16px;padding:18px;min-width:0}
+    h2{font-size:18px;font-weight:600;margin:0 0 14px;color:#f1f5f9}
+    h3{font-size:14px;font-weight:600;margin:0 0 10px;color:#dbeafe}
+    .chat{display:flex;flex-direction:column;min-height:720px}
+    .messages{flex:1;min-height:220px;max-height:520px;overflow:auto;padding:4px}
+    .message{background:#223249;border-radius:12px;padding:11px 12px;margin:0 0 10px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+    .message.user{background:#075985;margin-left:14%}
+    .chat-entry{display:flex;gap:7px;margin-top:12px}
+    input,select,textarea{width:100%;min-width:0;background:#0f1b2d;color:#e5edf5;border:1px solid #34465d;border-radius:9px;padding:10px;outline:none}
+    input::placeholder,textarea::placeholder{color:#8293a8}
+    button{border:0;border-radius:9px;background:#0284c7;color:#fff;padding:10px 14px;font-weight:600;cursor:pointer}
+    button:hover{background:#0ea5e9}button:disabled{opacity:.55;cursor:wait}
+    .patient{grid-column:2;grid-row:1}
+    .profile{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+    .photo{height:90px;width:90px;min-width:90px;border:1px dashed #52677f;border-radius:13px;background:#223249;display:grid;place-items:center;overflow:hidden;position:relative;color:#94a3b8;font-size:11px;text-align:center}
+    .photo img{width:100%;height:100%;object-fit:cover;display:none}
+    .photo input{position:absolute;inset:0;opacity:0;cursor:pointer;padding:0}
+    .profile-meta{flex:1}.profile-meta p{font-size:12px;color:#94a3b8;margin:5px 0}
+    .identity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+    label{display:block;font-size:11px;color:#aab8c9}
+    label input,label select{display:block;margin-top:5px;font-size:13px}
+    .metric-section{border-top:1px solid #293950;padding-top:14px;margin-top:14px}
+    .metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .metric-grid input{font-size:13px}
+    .hint{font-size:11px;color:#94a3b8;line-height:1.5;margin:10px 0 0}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .secondary{background:#334155}.secondary:hover{background:#475569}
+    .results{grid-column:3;grid-row:1 / span 2;display:flex;flex-direction:column;gap:12px}
+    .result-card{background:#0f1b2d;border:1px solid #293950;border-radius:12px;padding:14px}
+    .details-card{padding:0}
+    .details-card summary{cursor:pointer;font-size:16px;font-weight:700;list-style:none;padding:14px}
+    .details-card summary::-webkit-details-marker{display:none}
+    .details-card summary::after{content:"+";float:right;color:#94a3b8}
+    .details-card[open] summary::after{content:"-"}
+    .details-content{padding:0 14px 14px}
+    .result-status{font-size:17px;font-weight:700;margin:4px 0 8px}
+    .result-status.NORMAL{color:#4ade80}.result-status.MONITOR{color:#facc15}.result-status.REVIEW,.result-status.URGENT{color:#fb7185}
+    .risk-low{color:#4ade80}.risk-medium{color:#facc15}.risk-high{color:#ef4444}
+    .risk-card{transition:background-color .2s,border-color .2s}
+    .risk-card.risk-low{--risk-color:#4ade80;background:#10291f;border-color:#166534}
+    .risk-card.risk-medium{--risk-color:#facc15;background:#2c2713;border-color:#a16207}
+    .risk-card.risk-high{--risk-color:#f87171;background:#30191b;border-color:#991b1b}
+    .risk-summary{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .risk-score{font-size:32px;font-weight:700;line-height:1;color:var(--risk-color)}
+    .risk-label{font-size:13px;font-weight:700;color:var(--risk-color)}
+    .risk-meter{height:14px;margin:14px 0 7px;background:#334155;border-radius:999px;overflow:hidden}
+    #riskFill{height:100%;width:0;border-radius:inherit;background:var(--risk-color);transition:width .35s ease}
+    .risk-scale{display:flex;justify-content:space-between;gap:8px;color:#cbd5e1;font-size:9px;font-weight:700;letter-spacing:.04em}
+    .risk-card .hint{margin-top:12px}
+    .small{font-size:11px;color:#94a3b8;line-height:1.5}
+    .result-list{padding-left:18px;margin:8px 0;font-size:12px;line-height:1.5}
+    .result-list li{margin-bottom:8px}
+    .report-document{display:flex;flex-direction:column;gap:12px;min-height:420px;font-size:14px;line-height:1.55}
+    .report-intro,.report-section{background:#0f1b2d;border:1px solid #293950;border-radius:12px;padding:14px}
+    .report-intro{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .report-title{font-size:18px;font-weight:700;color:#f1f5f9}
+    .report-status-chip,.report-level{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+    .report-status-chip.NORMAL{background:#123a2a;color:#4ade80}
+    .report-status-chip.MONITOR{background:#3a3212;color:#facc15}
+    .report-status-chip.REVIEW,.report-status-chip.URGENT{background:#401c21;color:#f87171}
+    .report-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .report-meta-item{background:#172235;border:1px solid #293950;border-radius:9px;padding:10px;min-width:0}
+    .report-meta-label{display:block;color:#94a3b8;font-size:11px;margin-bottom:3px}
+    .report-meta-value{display:block;color:#e5edf5;overflow-wrap:anywhere}
+    .report-section h3{margin:0 0 10px}
+    .report-entries{display:grid;gap:8px}
+    .report-entry{border-top:1px solid #293950;padding:10px 0}
+    .report-entry:first-child{border-top:0;padding-top:0}
+    .report-entry-heading{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-bottom:4px}
+    .report-entry-label{color:#e5edf5;font-weight:600}
+    .report-level.URGENT,.report-level.REVIEW{background:#401c21;color:#f87171}
+    .report-level.MONITOR{background:#3a3212;color:#facc15}
+    .report-level.STATISTICAL{background:#102238;color:#93c5fd}
+    .report-entry-detail,.report-empty{color:#cbd5e1;overflow-wrap:anywhere}
+    .report-empty{color:#94a3b8}
+    .report-limitation{border-left:3px solid #eab308;background:#292516;color:#fef3c7;padding:12px;border-radius:6px}
+    .graph-wrap{height:220px;background:#0f1b2d;border:1px solid #293950;border-radius:12px;padding:8px}
+    #trendChart{width:100%;height:100%}
+    .report{grid-column:1 / 3}
+    .notice{border-left:3px solid #eab308;background:#292516;padding:10px 12px;border-radius:6px;color:#fef3c7;font-size:11px;line-height:1.5}
+    .empty{color:#94a3b8;font-size:12px;line-height:1.5}
+    @media(max-width:1100px){.layout{grid-template-columns:minmax(240px,.8fr) minmax(380px,1.2fr)}.results{grid-column:1 / 3;grid-row:auto}.report{grid-column:1 / 3}.chat{min-height:540px}}
+    @media(max-width:650px){body{padding:10px}.topbar{align-items:flex-start;flex-direction:column}.layout{display:flex;flex-direction:column}.chat{min-height:430px}.identity-grid,.metric-grid,.report-meta{grid-template-columns:1fr 1fr}.panel{padding:14px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div><div class="brand">ASTRA <span>●</span> HEALTH INTELLIGENCE</div><div class="sub">Monitoring and analysis system for astronaut measurements</div></div>
+    <div class="status-pill" id="connectionStatus">Connecting to server…</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel chat">
+      <h2>Registration assistant</h2>
+      <div class="messages" id="messages">
+        <div class="message">This panel allows you to record symptoms and observations to include in the report. It does not perform automated clinical conversation.</div>
+      </div>
+      <div class="chat-entry">
+        <input id="symptomInput" placeholder="Type a symptom or observation…" aria-label="Symptom or observation">
+        <button id="addSymptom">Add</button>
+      </div>
+      <p class="hint">Notes are saved only for this browser session and attached to the report.</p>
+    </section>
+
+    <section class="panel patient">
+      <h2>Data and measurements</h2>
+      <div class="profile">
+        <div class="photo"><span id="photoText">Astronaut<br>photo</span><img id="photoPreview" alt="Profile photo"><input type="file" accept="image/*" id="photoInput" aria-label="Select photo"></div>
+        <div class="profile-meta"><h3>Astronaut profile</h3><p>Personal data is informational only; the model uses only the 24 variables defined by ASTRA.</p></div>
+      </div>
+
+      <div class="identity-grid">
+        <label>Name / identifier<input id="personName" placeholder="Name or ID"></label>
+        <label>Weight (kg, optional)<input id="weight" type="number" step="any" placeholder="kg"></label>
+      </div>
+
+      <div id="metricSections"></div>
+      <div class="actions">
+        <button class="secondary" id="demoHealthyButton" type="button">Load low-risk demo</button>
+        <button class="secondary" id="demoRiskyButton" type="button">Load high-risk demo</button>
+        <button id="assessButton">Analyze measurements</button>
+        <button class="secondary" id="clearButton" type="button">Clear form</button>
+      </div>
+      <p class="hint">Enter values in the specified units. At least three numeric measurements are required for the statistical detector to emit a signal.</p>
+    </section>
+
+    <section class="panel results">
+      <div>
+        <h2>ASTRA result</h2>
+        <div class="result-card">
+          <div class="small">Assessment status</div>
+          <div class="result-status" id="resultStatus">No analysis</div>
+          <div class="small" id="resultSummary">Complete the measurements and select “Analyze measurements”.</div>
+        </div>
+      </div>
+      <div class="result-card">
+        <h3>What to do next</h3>
+        <div id="lifestyleGuidance" class="empty">Action instructions will appear after analysis.</div>
+      </div>
+      <details class="result-card details-card">
+        <summary>Key indicators and measurement details</summary>
+        <div class="details-content">
+          <h3>Indicators and observations</h3>
+          <div id="flags" class="empty">No results yet.</div>
+          <h3>Unusual measurements</h3>
+          <div id="drivers" class="empty">They will appear after analysis.</div>
+        </div>
+      </details>
+      <div class="result-card">
+        <h3>Session trend</h3>
+        <label>Variable for the chart<select id="chartMetric"></select></label>
+        <div class="graph-wrap"><svg id="trendChart" viewBox="0 0 420 210" role="img" aria-label="Chart of recorded measurements"></svg></div>
+        <p class="hint">The chart shows measurements recorded during this session. It does not represent clinical ranges or determine normality.</p>
+      </div>
+      <div class="notice">ASTRA is a research prototype built with synthetic data. Its statistical results and illustrative rules are not diagnostic, do not replace medical staff, and do not authorize mission operational decisions.</div>
+      <div class="result-card risk-card risk-low" id="riskCard" aria-live="polite">
+        <div class="risk-summary">
+          <div>
+            <h3>Risk assessment</h3>
+            <div class="risk-label risk-low" id="riskText">Risk: 0% · Stable</div>
+          </div>
+          <div class="risk-score" id="riskScore">0%</div>
+        </div>
+        <div class="risk-meter" id="riskMeter" role="progressbar" aria-label="Estimated risk score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent, low">
+          <div id="riskFill"></div>
+        </div>
+        <div class="risk-scale" aria-hidden="true"><span>LOW · 0–24</span><span>MODERATE · 25–54</span><span>HIGH · 55–100</span></div>
+        <p class="hint" id="riskNote">A prototype estimate from measurements and statistical flags—not a diagnosis. Follow your medical team and approved mission procedures.</p>
+      </div>
+    </section>
+
+    <section class="panel report">
+      <h2>Assessment report</h2>
+      <div id="report" class="report-document empty" aria-live="polite">The report will be generated after analysis.</div>
+      <div class="actions"><button id="copyReport" class="secondary">Copy report</button></div>
+    </section>
+  </main>
+
+<script>
+const metricGroups = [
+  {title:"Laboratory", items:[
+    ["Hemoglobin (g/dl)","Hemoglobin","g/dL"],["Hematocrit (%)","Hematocrit","%"],
+    ["Leukocytes (k/uL)","Leukocytes","10³/μL"],["Calcium (mg/dL)","Calcium","mg/dL"],
+    ["Vitamin D (ng/mL)","Vitamin D","ng/mL"],["alkaline phosphatase (U/L)","Alkaline phosphatase","U/L"],
+    ["Calcium excretion (mg/24hr)","Calcium excretion","mg/24 h"],["metabolites(ng/mL)","Metabolites (unspecified analyte)","ng/mL"],
+    ["Sodium (mmol/L)","Sodium","mmol/L"]
+  ]},
+  {title:"Physiology and fitness",items:[
+    ["Heart Rate (Bpm)","Heart rate","bpm"],["HRV (ms)","Heart rate variability (HRV)","ms"],
+    ["Oxygen saturation (%)","Oxygen saturation","%"],["SOS bone density (m/s)","Bone density SOS","m/s"],
+    ["Muscle Mass (kg)","Muscle mass","kg"],["Retinal & Optic Nerve Thickening(um) minimum rim width;","Retinal thickness / minimum rim width","μm"],
+    ["Aerobic Capacity ml⁄min/kg","Aerobic capacity","mL/kg/min"],["Work W","Work output","W"]
+  ]},
+  {title:"Environment and mission",items:[
+    ["Radiation per day(millirads)","Daily radiation","mrad/day"],["Cabin Pressure/atm (kPa)","Cabin pressure","kPa"],
+    ["Space Suit Pressure (kPa)","Suit pressure","kPa"],["EVA profile | Role","Mission profile / role","IVA, EVA, Rover, or Base"]
+  ]},
+  {title:"Context",items:[
+    ["Sex","Sex","F / M / Unknown"],["Age","Age","years"],["Height","Height","cm"]
+  ]}
+];
+const numericMetrics = metricGroups.flatMap(g=>g.items).filter(x=>!["EVA profile | Role","Sex"].includes(x[0]));
+const symptoms=[];
+const history=[];
+let latestResult=null;
+let randomizedRiskDemo=false;
+
+const demoHealthy = {
+  "Hemoglobin (g/dl)": 14.2,
+  "Hematocrit (%)": 42,
+  "Leukocytes (k/uL)": 6.2,
+  "Calcium (mg/dL)": 9.5,
+  "Vitamin D (ng/mL)": 32,
+  "alkaline phosphatase (U/L)": 76,
+  "Calcium excretion (mg/24hr)": 160,
+  "metabolites(ng/mL)": 18,
+  "Heart Rate (Bpm)": 62,
+  "HRV (ms)": 54,
+  "Oxygen saturation (%)": 98,
+  "SOS bone density (m/s)": 3793,
+  "Muscle Mass (kg)": 28.8,
+  "Radiation per day(millirads)": 178,
+  "Cabin Pressure/atm (kPa)": 101.3,
+  "Space Suit Pressure (kPa)": 29.5,
+  "EVA profile | Role": "EVA",
+  "Retinal & Optic Nerve Thickening(um) minimum rim width;": 363,
+  "Sodium (mmol/L)": 140,
+  "Sex": "F",
+  "Age": 34,
+  "Aerobic Capacity ml⁄min/kg": 33.3,
+  "Work W": 260,
+  "Height": 170
+};
+
+const demoRisky = {
+  "Hemoglobin (g/dl)": 9.4,
+  "Hematocrit (%)": 30,
+  "Leukocytes (k/uL)": 13.8,
+  "Calcium (mg/dL)": 7.7,
+  "Vitamin D (ng/mL)": 12,
+  "alkaline phosphatase (U/L)": 210,
+  "Calcium excretion (mg/24hr)": 450,
+  "metabolites(ng/mL)": 42,
+  "Heart Rate (Bpm)": 118,
+  "HRV (ms)": 22,
+  "Oxygen saturation (%)": 89,
+  "SOS bone density (m/s)": 3.1,
+  "Muscle Mass (kg)": 44,
+  "Radiation per day(millirads)": 420,
+  "Cabin Pressure/atm (kPa)": 86,
+  "Space Suit Pressure (kPa)": 25,
+  "EVA profile | Role": "EVA",
+  "Retinal & Optic Nerve Thickening(um) minimum rim width;": 130,
+  "Sodium (mmol/L)": 151,
+  "Sex": "M",
+  "Age": 41,
+  "Aerobic Capacity ml⁄min/kg": 28,
+  "Work W": 420,
+  "Height": 178
+};
+
+function makeField(key,label,unit){
+  const wrap=document.createElement("label");
+  wrap.textContent=unit ? `${label} (${unit})` : label;
+  let input;
+  if(key==="Sex" || key==="EVA profile | Role"){
+    input=document.createElement("select");
+    const options=key==="Sex" ? [["","Select"],["F","Female"],["M","Male"],["Unknown","Unknown"]] : [["Unknown","Select"],["IVA","IVA"],["EVA","EVA"],["Rover","Rover"],["Base","Base"]];
+    options.forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;input.appendChild(o)});
+  }else{
+    input=document.createElement("input");input.type="number";input.step="any";input.placeholder="No data";
+  }
+  input.id="metric_"+key;
+  input.dataset.metric=key;
+  wrap.appendChild(input);
+  return wrap;
+}
+function renderMetrics(){
+  const root=document.getElementById("metricSections");
+  metricGroups.forEach(group=>{
+    const section=document.createElement("div");section.className="metric-section";
+    const h=document.createElement("h3");h.textContent=group.title;section.appendChild(h);
+    const grid=document.createElement("div");grid.className="metric-grid";
+    group.items.forEach(([key,label,unit])=>grid.appendChild(makeField(key,label,unit)));
+    section.appendChild(grid);root.appendChild(section);
+  });
+}
+function collectMeasurements(){
+  const data={};
+  metricGroups.flatMap(g=>g.items).forEach(([key])=>{
+    const el=document.getElementById("metric_"+key);
+    if(key==="Sex" || key==="EVA profile | Role"){data[key]=el.value||"Unknown"}
+    else {data[key]=el.value.trim()===""?null:Number(el.value)}
+  });
+  return data;
+}
+function addMessage(text,kind=""){
+  const div=document.createElement("div");div.className="message"+(kind?" "+kind:"");div.textContent=text;
+  const box=document.getElementById("messages");box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function addSymptom(){
+  const input=document.getElementById("symptomInput");const value=input.value.trim();if(!value)return;
+  symptoms.push(value);addMessage(value,"user");addMessage("Observation added to this session report.");
+  input.value="";
+}
+function fillDemoValues(values){
+  clearForm();
+  randomizedRiskDemo = values === demoRisky;
+  Object.entries(values).forEach(([key, value]) => {
+    const el = document.getElementById("metric_" + key);
+    if (!el) return;
+    if (key === "Sex" || key === "EVA profile | Role") {
+      el.value = value ?? "Unknown";
+      return;
+    }
+    el.value = value === null || value === undefined ? "" : value;
+  });
+  document.getElementById("personName").value = "Demo astronaut";
+}
+function generateLifestyleGuidance(measurements, flags = [], riskScore = 0, mlWithheld = false) {
+  const guidance = [];
+  const add = (text) => {
+    if (text && !guidance.includes(text)) guidance.push(text);
+  };
+  const urgent = flags.some(flag => flag.level === "URGENT");
+  if (riskScore >= 55 || urgent) {
+    add("Exercise: stop the current session and do not add workload based on this prototype result. Secure yourself using the vehicle's approved restraints or handholds, contact the crew medical officer or flight surgeon, and follow onboard procedures before resuming.");
+  } else if (mlWithheld) {
+    add("Exercise: no tailored plan is shown because there are too few numeric measurements. Complete the required measurements and continue only your already-approved onboard countermeasure schedule; a low score is not exercise clearance.");
+  } else if (riskScore >= 25) {
+    add("Exercise: avoid unscheduled or high-intensity work until the readings are reviewed. If cleared and symptom-free, use only the assigned cycle ergometer or resistance device at the workload in your onboard plan; secure restraints as instructed and stop for dizziness, chest discomfort, unusual breathlessness, or worsening symptoms.");
+  } else {
+    add("Aerobic: if medically cleared and symptom-free, follow the scheduled session on the assigned cycle ergometer or treadmill with restraint harness. Use the workload and duration in the crew exercise plan; do not add time or intensity based on this prototype score.");
+    add("Strength: use the assigned onboard resistance device (such as ARED where available) on planned countermeasure days. Verify the setup and restraints, use only the prescribed load and repetitions, and do not improvise free weights or unapproved anchors.");
+  }
+
+  const calcium = measurements["Calcium (mg/dL)"];
+  if (Number.isFinite(calcium) && calcium < 8.5) {
+    add("Calcium: microgravity can accelerate bone mineral loss. Choose a calcium-rich or calcium-fortified ration from the approved onboard inventory and follow your assigned bone-health nutrition and exercise countermeasure plan. If a calcium supplement is not already prescribed, ask the flight surgeon to review a confirmed result and your medical history before starting one; do not change a prescribed dose from this prototype.");
+  } else if (Number.isFinite(calcium) && calcium > 10.5) {
+    add("Calcium: do not add or increase calcium or vitamin D supplements based on this result. Promptly report it to the crew medical officer or flight surgeon for onboard lab confirmation and bone-health review; do not stop a prescribed supplement unless they direct you.");
+  }
+
+  const calciumExcretion = measurements["Calcium excretion (mg/24hr)"];
+  if (Number.isFinite(calciumExcretion) && (calciumExcretion < 40 || calciumExcretion > 300)) {
+    add("Calcium excretion: verify the timed urine collection start/end times and completeness using the onboard lab procedure. Calcium balance and bone turnover can change in microgravity, so ask the crew medical officer to review this with your calcium, vitamin D, and flight baseline; do not change supplements or fluid intake on your own.");
+  }
+
+  const hemoglobin = measurements["Hemoglobin (g/dl)"];
+  if (Number.isFinite(hemoglobin) && hemoglobin < 12) {
+    add("Hemoglobin: choose iron-containing or iron-fortified rations from the approved onboard inventory, such as fortified cereal or legumes if stocked; pair plant-based iron with a vitamin-C-fortified item if available. Report fatigue, dizziness, or shortness of breath. Because microgravity-related fluid shifts can affect blood concentration, have the crew medical officer confirm the result against your flight baseline before considering iron; do not start iron supplements without their direction.");
+  } else if (Number.isFinite(hemoglobin) && hemoglobin > 18) {
+    add("Hemoglobin: do not take iron supplements to address this result. Keep to the onboard hydration plan and arrange review with the crew medical officer; do not assume extra water will correct it.");
+  }
+
+  const sodium = measurements["Sodium (mmol/L)"];
+  if (Number.isFinite(sodium) && (sodium < 135 || sodium > 145)) {
+    add("Sodium: compare the entry and units with the onboard lab report before acting. Do not try to correct it by adding salt, electrolyte products, or extra water; follow the flight hydration plan and ask the crew medical officer to interpret a confirmed abnormal result.");
+  }
+
+  const leukocytes = measurements["Leukocytes (k/uL)"];
+  if (Number.isFinite(leukocytes) && (leukocytes < 4 || leukocytes > 11)) {
+    add("Leukocytes: have the onboard result and trend reviewed by the crew medical officer. A count alone cannot identify infection or an immune cause; report symptoms and follow the mission medical plan.");
+  }
+
+  const vitaminD = measurements["Vitamin D (ng/mL)"];
+  if (Number.isFinite(vitaminD) && vitaminD < 20) {
+    add("Vitamin D: choose vitamin-D-fortified rations from the approved onboard inventory and follow your assigned bone-health countermeasure plan; do not rely on window sunlight or unapproved products. If a supplement is not already prescribed, ask the flight surgeon to review a confirmed result and set any dose. Do not change a prescribed dose based on this prototype.");
+  } else if (Number.isFinite(vitaminD) && vitaminD > 80) {
+    add("Vitamin D: do not add or increase supplements based on this result. Ask the crew medical officer or flight surgeon to confirm it with the onboard lab and review all prescribed or onboard supplements before changing anything.");
+  }
+
+  const alkalinePhosphatase = measurements["alkaline phosphatase (U/L)"];
+  if (Number.isFinite(alkalinePhosphatase) && (alkalinePhosphatase < 35 || alkalinePhosphatase > 135)) {
+    add("Alkaline phosphatase: ask the crew medical officer to confirm the result and interpret it alongside calcium, vitamin D, and your flight baseline. It is not a reason to start a supplement or change your onboard countermeasure plan by itself.");
+  }
+
+  const oxygen = measurements["Oxygen saturation (%)"];
+  if (Number.isFinite(oxygen) && oxygen < 94) {
+    add("Oxygen reading: pause exercise, secure yourself in a stable position using approved restraints or handholds, and check the onboard sensor placement. If the reading remains low or you feel unwell, follow the onboard medical procedure promptly; do not exercise to try to raise it.");
+  } else if (Number.isFinite(oxygen) && oxygen > 100) {
+    add("Oxygen reading: this value cannot be a valid percentage. Check the onboard sensor, units, and entry before relying on it; contact crew medical staff if the correct reading is still concerning.");
+  }
+
+  const heartRate = measurements["Heart Rate (Bpm)"];
+  if (Number.isFinite(heartRate) && heartRate > 110) {
+    add("Heart rate: stop the workload, secure yourself as required, rest for 5 minutes, and check the onboard monitor again. Note recent exercise and symptoms; avoid strenuous work if it remains elevated and follow crew medical guidance.");
+  } else if (Number.isFinite(heartRate) && heartRate < 50) {
+    add("Heart rate: compare the reading with your flight baseline and symptoms. Secure yourself and contact the crew medical officer promptly if you feel faint, weak, short of breath, or unwell; do not use this prototype to decide whether to exercise.");
+  }
+
+  if ((Number.isFinite(calcium) && (calcium < 8.5 || calcium > 10.5)) ||
+      (Number.isFinite(hemoglobin) && (hemoglobin < 12 || hemoglobin > 18)) ||
+      (Number.isFinite(calciumExcretion) && (calciumExcretion < 40 || calciumExcretion > 300))) {
+    add("Hydration: microgravity changes fluid distribution, so use the approved onboard drink container and follow your flight hydration schedule or fluid limits. Do not force extra fluids or use water to treat an abnormal lab result.");
+  }
+
+  const metricsWithDedicatedGuidance = new Set([
+    "Oxygen saturation (%)", "Sodium (mmol/L)", "Calcium (mg/dL)",
+    "Hemoglobin (g/dl)", "Leukocytes (k/uL)", "Heart Rate (Bpm)",
+    "Vitamin D (ng/mL)", "Calcium excretion (mg/24hr)",
+    "alkaline phosphatase (U/L)"
+  ]);
+  flags.filter(flag => flag.action && (
+    !metricsWithDedicatedGuidance.has(flag.metric) ||
+    (flag.finding || "").startsWith("Implausible input")
+  )).forEach(flag => add(`${flag.metric}: ${flag.action}`));
+  if (!flags.length && riskScore >= 25) {
+    add("Have unusual readings and onboard sensor/unit checks reviewed by the crew medical officer before changing your countermeasure schedule.");
+  }
+  return guidance;
+}
+function showList(target,items,emptyText){
+  target.replaceChildren();
+  if(!items||!items.length){target.className="empty";target.textContent=emptyText;return}
+  target.className="";
+  const ul=document.createElement("ul");ul.className="result-list";
+  items.forEach(item=>{const li=document.createElement("li");li.textContent=item;ul.appendChild(li)});
+  target.appendChild(ul);
+}
+function appendReportSection(report,title,entries,emptyText){
+  const section=document.createElement("section");section.className="report-section";
+  const heading=document.createElement("h3");heading.textContent=title;section.appendChild(heading);
+  if(!entries.length){
+    const empty=document.createElement("p");empty.className="report-empty";empty.textContent=emptyText;section.appendChild(empty);
+  }else{
+    const list=document.createElement("div");list.className="report-entries";
+    entries.forEach(entry=>{
+      const item=document.createElement("div");item.className="report-entry";
+      const itemHeading=document.createElement("div");itemHeading.className="report-entry-heading";
+      const label=document.createElement("span");label.className="report-entry-label";label.textContent=entry.label;itemHeading.appendChild(label);
+      if(entry.level){
+        const level=document.createElement("span");level.className="report-level "+entry.level;level.textContent=entry.level;itemHeading.appendChild(level);
+      }
+      item.appendChild(itemHeading);
+      const detail=document.createElement("div");detail.className="report-entry-detail";detail.textContent=entry.detail;item.appendChild(detail);
+      list.appendChild(item);
+    });
+    section.appendChild(list);
+  }
+  report.appendChild(section);
+}
+function renderAssessmentReport({name,status,model,riskScore,measurements,flags,unitWarnings,guidance,drivers,patterns,notes,notice}){
+  const report=document.getElementById("report");
+  report.replaceChildren();
+  report.className="report-document";
+  report.dataset.ready="true";
+
+  const intro=document.createElement("div");intro.className="report-intro";
+  const title=document.createElement("div");title.className="report-title";title.textContent="ASTRA — Assessment report";
+  const badge=document.createElement("span");badge.className="report-status-chip "+status;badge.textContent=status;
+  intro.append(title,badge);report.appendChild(intro);
+
+  const metadata=document.createElement("div");metadata.className="report-meta";
+  [
+    ["Identifier",name],
+    ["Date",new Date().toLocaleString()],
+    ["Statistical model",model],
+    ["Risk score",riskScore],
+    ["Measurements available",measurements]
+  ].forEach(([label,value])=>{
+    const item=document.createElement("div");item.className="report-meta-item";
+    const itemLabel=document.createElement("span");itemLabel.className="report-meta-label";itemLabel.textContent=label;
+    const itemValue=document.createElement("strong");itemValue.className="report-meta-value";itemValue.textContent=value;
+    item.append(itemLabel,itemValue);metadata.appendChild(item);
+  });
+  report.appendChild(metadata);
+  appendReportSection(report,"What to do next",guidance,"No specific next steps were generated.");
+  appendReportSection(report,"Key indicators",flags,"No indicators were identified by the demonstration rules.");
+  appendReportSection(report,"Unit and entry checks",unitWarnings,"No obvious unit or entry anomalies were detected.");
+  appendReportSection(report,"Statistical drivers",drivers,"There are not enough values to calculate the main statistical deviations.");
+  appendReportSection(report,"Simulated patterns",patterns,"No specific pattern was identified.");
+  appendReportSection(report,"Registered notes",notes,"No notes were recorded.");
+  const limitation=document.createElement("p");limitation.className="report-limitation";
+  limitation.textContent=notice;
+  report.appendChild(limitation);
+}
+function renderChart(){
+  const svg=document.getElementById("trendChart");svg.replaceChildren();
+  const metric=document.getElementById("chartMetric").value;
+  const points=history.map((entry,i)=>({x:i,y:entry[metric]})).filter(p=>Number.isFinite(p.y));
+  const NS="http://www.w3.org/2000/svg";
+  const el=(tag,attrs,text)=>{const n=document.createElementNS(NS,tag);Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;svg.appendChild(n);return n};
+  [35,75,115,155].forEach(y=>el("line",{x1:38,y1:y,x2:405,y2:y,stroke:"#293950","stroke-width":1}));
+  el("line",{x1:38,y1:15,x2:38,y2:175,stroke:"#64748b"});el("line",{x1:38,y1:175,x2:405,y2:175,stroke:"#64748b"});
+  if(!points.length){el("text",{x:210,y:105,"text-anchor":"middle",fill:"#94a3b8","font-size":12},"No measurements recorded");return}
+  const vals=points.map(p=>p.y),min=Math.min(...vals),max=Math.max(...vals),span=(max-min)||1;
+  const coords=points.map((p,i)=>({x:48+(points.length===1?0:i*347/(points.length-1)),y:160-(p.y-min)/span*125}));
+  if(coords.length>1)el("polyline",{points:coords.map(p=>`${p.x},${p.y}`).join(" "),fill:"none",stroke:"#38bdf8","stroke-width":3,"stroke-linecap":"round","stroke-linejoin":"round"});
+  coords.forEach((p,i)=>{el("circle",{cx:p.x,cy:p.y,r:4,fill:"#38bdf8"});el("text",{x:p.x,y:192,"text-anchor":"middle",fill:"#94a3b8","font-size":10},String(i+1))});
+}
+function calculateRiskScore(data, measurements, unitWarnings = []) {
+  const severityWeight = { NORMAL: 0, MONITOR: 18, REVIEW: 42, URGENT: 68 };
+  let score = severityWeight[data.status] || 0;
+  score += Math.min((data.flags || []).length * 9, 28);
+  score += Math.min((data.iqr_outliers || []).length * 7, 20);
+  if (data.ml_anomaly) score += 12;
+  if (data.ml_withheld) score += 10;
+  score += Math.min(unitWarnings.length * 8, 20);
+  score += Math.min(Object.keys(measurements || {}).filter(k => measurements[k] !== null && measurements[k] !== undefined && measurements[k] !== "Unknown").length > 0 ? 0 : 5, 5);
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function updateRiskMeter(data, measurements, unitWarnings = [], scoreOverride = null) {
+  const score = scoreOverride === null ? calculateRiskScore(data, measurements, unitWarnings) : scoreOverride;
+  const fill = document.getElementById("riskFill");
+  const text = document.getElementById("riskText");
+  const card = document.getElementById("riskCard");
+  const scoreText = document.getElementById("riskScore");
+  const meter = document.getElementById("riskMeter");
+  const note = document.getElementById("riskNote");
+  let level;
+  fill.style.width = score + "%";
+  if (score < 25) {
+    level = "risk-low";
+    text.textContent = `${randomizedRiskDemo ? "Demo risk" : "Risk"}: ${score}% · Stable`;
+  } else if (score < 55) {
+    level = "risk-medium";
+    text.textContent = `${randomizedRiskDemo ? "Demo risk" : "Risk"}: ${score}% · Monitor`;
+  } else {
+    level = "risk-high";
+    text.textContent = `${randomizedRiskDemo ? "Demo risk" : "Risk"}: ${score}% · Action needed`;
+  }
+  card.className = `result-card risk-card ${level}`;
+  text.className = `risk-label ${level}`;
+  scoreText.className = `risk-score ${level}`;
+  scoreText.textContent = `${score}%`;
+  meter.setAttribute("aria-valuenow", String(score));
+  meter.setAttribute("aria-valuetext", `${score} percent, ${level.replace("risk-", "")}${randomizedRiskDemo ? ", randomized demo" : ""}`);
+  note.textContent = randomizedRiskDemo
+    ? "Randomized demo score (0–100%), independent of the measurements. The result flags and suggested actions still come from the analysis. Not a diagnosis."
+    : "A prototype estimate from measurements and statistical flags—not a diagnosis. Follow your medical team and approved mission procedures.";
+  return score;
+}
+
+function renderResult(data,measurements){
+  latestResult=data;
+  const status=data.status||"No status";
+  const statusEl=document.getElementById("resultStatus");statusEl.textContent=status;statusEl.className="result-status "+status;
+  const unitWarnings=[];
+  const unitChecks={
+    "Oxygen saturation (%)": v => v >= 0 && v <= 100,
+    "Heart Rate (Bpm)": v => v >= 0 && v <= 250,
+    "Sodium (mmol/L)": v => v >= 0 && v <= 250,
+    "Age": v => v >= 0 && v <= 120,
+    "Height": v => v >= 0 && v <= 250,
+    "Cabin Pressure/atm (kPa)": v => v >= 0 && v <= 200,
+    "Space Suit Pressure (kPa)": v => v >= 0 && v <= 100,
+    "Radiation per day(millirads)": v => v >= 0 && v <= 5000,
+    "Calcium (mg/dL)": v => v >= 0 && v <= 50,
+    "Hemoglobin (g/dl)": v => v >= 0 && v <= 30,
+    "Leukocytes (k/uL)": v => v >= 0 && v <= 100,
+    "Vitamin D (ng/mL)": v => v >= 0 && v <= 500,
+    "Calcium excretion (mg/24hr)": v => v >= 0 && v <= 2000,
+    "alkaline phosphatase (U/L)": v => v >= 0 && v <= 1000,
+    "Hematocrit (%)": v => v >= 0 && v <= 100,
+    "HRV (ms)": v => v >= 0 && v <= 5000,
+    "Muscle Mass (kg)": v => v >= 0 && v <= 200,
+    "Aerobic Capacity ml⁄min/kg": v => v >= 0 && v <= 250,
+    "Work W": v => v >= 0 && v <= 1000,
+    "SOS bone density (m/s)": v => v >= 2500 && v <= 4500,
+    "Retinal & Optic Nerve Thickening(um) minimum rim width;": v => v >= 0 && v <= 1000
+  };
+  Object.entries(measurements).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === "Unknown") return;
+    const validator = unitChecks[key];
+    if (validator && !validator(Number(value))) {
+      unitWarnings.push(`${key}: value ${value} is outside the expected realistic range for the unit and may indicate a unit, sensor, or entry error.`);
+    }
+  });
+  const calculatedRiskScore = calculateRiskScore(data, measurements, unitWarnings);
+  const displayRiskScore = randomizedRiskDemo ? Math.floor(Math.random() * 101) : calculatedRiskScore;
+  updateRiskMeter(data, measurements, unitWarnings, displayRiskScore);
+  document.getElementById("resultSummary").textContent =
+    `${data.numeric_measurements_available} of ${data.numeric_measurements_total} numeric measurements available. `+
+    (data.ml_withheld?"The model abstained due to insufficient measurements.":data.ml_anomaly?"A statistical anomaly was detected.":"No statistical anomaly was detected.");
+  const flags=(data.flags||[]).map(f=>`${f.level} — ${f.metric}: ${f.value}. ${f.finding}`);
+  (data.iqr_outliers||[]).forEach(f=>flags.push(`Statistical outlier — ${f.metric}: ${f.value} (training reference ${f.population_reference_lower} to ${f.population_reference_upper}).`));
+  showList(document.getElementById("flags"),flags,"No indicators were identified under the demonstration rules. This does not rule out health issues.");
+  const drivers=(data.statistical_drivers||[]).map(f=>`${f.metric}: ${f.value}; training median ${f.reference_median}; distance ${f.distance_IQR} IQR.`);
+  showList(document.getElementById("drivers"),drivers,"There are not enough values to calculate the main statistical deviations.");
+  const lifestyleGuidance = generateLifestyleGuidance(measurements, data.flags || [], calculatedRiskScore, data.ml_withheld);
+  showList(document.getElementById("lifestyleGuidance"),lifestyleGuidance,"No specific instructions were generated; follow onboard crew medical guidance.");
+  history.push(measurements);
+  renderChart();
+  const name=document.getElementById("personName").value.trim()||"Not registered";
+  const reportFlags=(data.flags||[]).map(flag=>({
+    label:`${flag.metric}: ${flag.value}`,
+    detail:flag.finding,
+    level:flag.level
+  }));
+  (data.iqr_outliers||[]).forEach(outlier=>reportFlags.push({
+    label:`${outlier.metric}: ${outlier.value}`,
+    detail:`Statistical outlier; training reference ${outlier.population_reference_lower} to ${outlier.population_reference_upper}.`,
+    level:"STATISTICAL"
+  }));
+  const unitCheckEntries=unitWarnings.map((warning,index)=>{
+    const split=warning.indexOf(":");
+    return {label:split<0?`Check ${index+1}`:warning.slice(0,split),detail:split<0?warning:warning.slice(split+1).trim()};
+  });
+  const guidanceEntries=lifestyleGuidance.map(action=>{
+    const split=action.indexOf(":");
+    return {label:split<0?"Action":action.slice(0,split),detail:split<0?action:action.slice(split+1).trim()};
+  });
+  const driverEntries=(data.statistical_drivers||[]).map(driver=>({
+    label:driver.metric,
+    detail:`Observed ${driver.value}; training median ${driver.reference_median}; distance ${driver.distance_IQR} IQR.`
+  }));
+  renderAssessmentReport({
+    name,
+    status,
+    model:data.ml_withheld?"Withheld due to insufficient data":data.ml_anomaly?"Anomaly detected":"No anomaly detected",
+    riskScore:randomizedRiskDemo?`${displayRiskScore}% (randomized demo)`: `${calculatedRiskScore}% (prototype estimate)`,
+    measurements:`${data.numeric_measurements_available}/${data.numeric_measurements_total}`,
+    flags:reportFlags,
+    unitWarnings:unitCheckEntries,
+    guidance:guidanceEntries,
+    drivers:driverEntries,
+    patterns:(data.possible_patterns||[]).map((pattern,index)=>({label:`Pattern ${index+1}`,detail:pattern})),
+    notes:symptoms.map((note,index)=>({label:`Note ${index+1}`,detail:note})),
+    notice:data.notice||"Educational research prototype."
+  });
+}
+
+async function assess(){
+  const button=document.getElementById("assessButton");button.disabled=true;button.textContent="Analyzing…";
+  try{
+    const measurements=collectMeasurements();
+    const response=await fetch("/api/assess",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({measurements})});
+    const payload=await response.json();
+    if(!response.ok)throw new Error(payload.error||"The analysis could not be completed.");
+    renderResult(payload,measurements);
+  }catch(err){addMessage("Error: "+err.message);document.getElementById("connectionStatus").textContent="Connection error"}
+  finally{button.disabled=false;button.textContent="Analyze measurements"}
+}
+
+function clearForm(){
+  randomizedRiskDemo=false;
+  document.querySelectorAll("[data-metric]").forEach(el=>el.value="");
+  document.getElementById("personName").value="";document.getElementById("weight").value="";
+  const report=document.getElementById("report");
+  report.replaceChildren();report.className="report-document empty";report.dataset.ready="false";
+  report.textContent="The report will be generated after analysis.";
+  document.getElementById("resultStatus").textContent="No analysis";
+  document.getElementById("resultStatus").className="result-status";
+  document.getElementById("resultSummary").textContent="Complete the measurements and select “Analyze measurements”.";
+  document.getElementById("riskFill").style.width="0%";
+  document.getElementById("riskCard").className="result-card risk-card risk-low";
+  document.getElementById("riskText").className="risk-label risk-low";
+  document.getElementById("riskText").textContent="Risk: 0% · Stable";
+  document.getElementById("riskScore").className="risk-score risk-low";
+  document.getElementById("riskScore").textContent="0%";
+  document.getElementById("riskMeter").setAttribute("aria-valuenow","0");
+  document.getElementById("riskMeter").setAttribute("aria-valuetext","0 percent, low");
+  document.getElementById("riskNote").textContent="A prototype estimate from measurements and statistical flags—not a diagnosis. Follow your medical team and approved mission procedures.";
+  showList(document.getElementById("flags"),[],"No results yet.");
+  showList(document.getElementById("drivers"),[],"They will appear after analysis.");
+  showList(document.getElementById("lifestyleGuidance"),[],"Exercise and lab-specific actions will appear after analysis.");
+}
+
+async function checkServer(){
+  try{const r=await fetch("/api/status");const d=await r.json();document.getElementById("connectionStatus").textContent=d.ready?"Server connected · ASTRA ready":"Server connected · model pending"}
+  catch{document.getElementById("connectionStatus").textContent="Server disconnected"}
+}
+
+renderMetrics();
+document.querySelectorAll("[data-metric]").forEach(el=>{
+  el.addEventListener("input",()=>{randomizedRiskDemo=false});
+  el.addEventListener("change",()=>{randomizedRiskDemo=false});
+});
+
+const healthyButton=document.getElementById("demoHealthyButton");
+const riskyButton=document.getElementById("demoRiskyButton");
+if(healthyButton)healthyButton.addEventListener("click",()=>fillDemoValues(demoHealthy));
+if(riskyButton)riskyButton.addEventListener("click",()=>fillDemoValues(demoRisky));
+
+numericMetrics.forEach(([key,label])=>{const o=document.createElement("option");o.value=key;o.textContent=label;document.getElementById("chartMetric").appendChild(o)});
+document.getElementById("addSymptom").addEventListener("click",addSymptom);
+document.getElementById("symptomInput").addEventListener("keydown",e=>{if(e.key==="Enter")addSymptom()});
+document.getElementById("assessButton").addEventListener("click",assess);
+document.getElementById("clearButton").addEventListener("click",clearForm);
+document.getElementById("chartMetric").addEventListener("change",renderChart);
+document.getElementById("copyReport").addEventListener("click",async()=>{
+  const report=document.getElementById("report");
+  const text=report.dataset.ready==="true"?report.innerText.trim():"";
+  if(text)await navigator.clipboard.writeText(text);
+});
+document.getElementById("photoInput").addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;const img=document.getElementById("photoPreview");img.src=URL.createObjectURL(file);img.style.display="block";document.getElementById("photoText").style.display="none"});
+renderChart();checkServer();
+</script>
+</body>
+</html>
